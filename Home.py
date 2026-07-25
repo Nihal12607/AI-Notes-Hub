@@ -1,39 +1,8 @@
 import streamlit as st
-from src.pdf_extracter import *
-
-# CSS
-st.markdown("""
-<style>
-    .block-container{
-        padding-top:9rem;
-    }
-    .stButton button{
-        background-color:#4F8BF9;
-        margin-left:50px;
-        color:white;
-        width:150px;
-        height:80px;
-        border-radius:24px;
-        font-size:22px;
-        font-weight:800;
-
-    }
-    /* Hover */
-    .stButton > button:hover{
-        background-color:#3674e8;
-        color:white;
-    }
-
-    /* Disabled button */
-    .stButton > button:disabled {
-        background-color: #2E3440;
-        color: #8A8A8A;
-        border: 1px solid #444;
-        cursor: not-allowed;
-    }
-</style>
-""",unsafe_allow_html=True)
-
+from src.pdf_extracter import extract_pdf,extract_text
+from src.rag_utils import index_document,load_embedder
+from src.ui import home_css
+import hashlib
 
 # Page Info
 st.set_page_config(
@@ -41,6 +10,9 @@ st.set_page_config(
     page_icon="📚",
     layout="wide"
 )
+
+# CSS
+home_css()
 
 # Title
 st.title("📖 AI Notes Hub",text_alignment="center")
@@ -57,27 +29,39 @@ uploaded_file = st.file_uploader(label="Select file",
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Text Extraction
-doc = " "
+text = " "
 if uploaded_file:
-    st.toast("📓file Uploaded")
     file_bytes = uploaded_file.read()
-    st.session_state["pdf_name"] = uploaded_file.name
+    file_hash = hashlib.sha256(file_bytes).hexdigest()
 
-    extension = uploaded_file.name.split(".")[-1].lower()
+    if st.session_state.get("pdf_hash") != file_hash:    
+        st.session_state["pdf_name"] = uploaded_file.name
+        st.session_state["pdf_hash"] = file_hash
+        extension = uploaded_file.name.split(".")[-1].lower()
 
-    if extension == "pdf":
-        text = extract_pdf(file_bytes)
-        st.session_state["pdf_notes"] = text
+        try:
+            if extension == "pdf":
+                text = extract_pdf(file_bytes)
+            elif extension == "txt":
+                text = extract_text(file_bytes)
 
-    elif extension == "txt":
-        text = extract_text(file_bytes)
-        st.session_state["pdf_notes"] = text
+            if not text or not text.strip():
+                st.error("❌ No readable text was found in the uploaded file, Try Again")
+                st.session_state.pop("pdf_notes", None)
+            else:
+                st.session_state["pdf_notes"] = text
+                # CRITICAL: Call index_document here to populate ChromaDB!
+                with st.spinner("⚡Analyzing document ...."):
+                    index_document(text)
 
+        except Exception as e:
+            st.error("❌ Failed to read the file, Try Again")
+            st.session_state.pop("pdf_notes", None)
 
 if "pdf_notes" in st.session_state:
     st.success(f"{st.session_state["pdf_name"]}  has been  Uploaded")
 
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("<br><br>", unsafe_allow_html=True)
 
 # Buttons
 

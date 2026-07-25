@@ -3,13 +3,20 @@ from google.genai import types
 import os
 import streamlit as st
 
-def pt(f_prompt:str) -> str:
+@st.cache_resource(show_spinner=False)
+def get_gemini_client() -> genai.Client | None:
+    
     api_key = os.getenv("GEMINI_API_KEY")
+    
     if not api_key:
-        st.error("🔑 API Key missing! Please set GEMINI_API_KEY in your environment.")
-        return ""
+        st.error("🔑 GEMINI_API_KEY environment variable is missing!")
+        return None
 
-    client = genai.Client(api_key=api_key)
+    # This client initialization happens only on a cache miss
+    return genai.Client(api_key=api_key)
+
+def pt(f_prompt:str) -> str:
+    client = get_gemini_client()
 
     response = client.models.generate_content(
         model='gemini-3.1-flash-lite',
