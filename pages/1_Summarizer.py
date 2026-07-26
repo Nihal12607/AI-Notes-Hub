@@ -23,7 +23,7 @@ if bool(prompt.strip()):
     with st.container(border=True):
         with st.spinner("🧠 Generating Summary ......"):
 
-            context = retrieve_context(prompt,top_k=6)
+            context = retrieve_context(prompt,top_k=2)
             context_to_send = context if context.strip() else text
             response = pt(summarize_prompt(prompt,context_to_send))
             

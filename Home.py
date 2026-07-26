@@ -2,13 +2,14 @@ import streamlit as st
 from src.pdf_extracter import extract_pdf,extract_text
 from src.rag_utils import index_document,load_embedder
 from src.ui import home_css
+from src.rag_utils import retrieve_context
 import hashlib
 
 # Page Info
 st.set_page_config(
     page_title="AI Notes Hub",
     page_icon="📚",
-    layout="wide"
+    layout="wide",
 )
 
 # CSS
@@ -22,49 +23,95 @@ st.markdown("<br>", unsafe_allow_html=True)
 st.subheader("📂 Please Upload Your Notes")
 st.markdown("<br>", unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader(label="Select file",
+uploaded_files = st.file_uploader(label="Select file",
     type=["pdf","txt"],
-    label_visibility="collapsed"
+    label_visibility="collapsed",
+    accept_multiple_files=True
 )
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Text Extraction
-text = " "
-if uploaded_file:
-    file_bytes = uploaded_file.read()
-    file_hash = hashlib.sha256(file_bytes).hexdigest()
+if uploaded_files and len(uploaded_files)<5:
 
-    if st.session_state.get("pdf_hash") != file_hash:    
-        st.session_state["pdf_name"] = uploaded_file.name
-        st.session_state["pdf_hash"] = file_hash
-        extension = uploaded_file.name.split(".")[-1].lower()
+    # Create a hash for the entire upload
+    hash_object = hashlib.sha256()
 
-        try:
-            if extension == "pdf":
-                text = extract_pdf(file_bytes)
-            elif extension == "txt":
-                text = extract_text(file_bytes)
+    for file in uploaded_files:
+        hash_object.update(file.read())
+        file.seek(0)
 
-            if not text or not text.strip():
-                st.error("❌ No readable text was found in the uploaded file, Try Again")
-                st.session_state.pop("pdf_notes", None)
-            else:
-                st.session_state["pdf_notes"] = text
-                # CRITICAL: Call index_document here to populate ChromaDB!
-                with st.spinner("⚡Analyzing document ...."):
-                    index_document(text)
+    upload_hash = hash_object.hexdigest()
 
-        except Exception as e:
-            st.error("❌ Failed to read the file, Try Again")
+    if st.session_state.get("upload_hash") != upload_hash:
+
+        st.session_state["upload_hash"] = upload_hash
+
+        combined_text = ""
+        uploaded_names = []
+
+        with st.spinner("⚡ Extracting documents ....."):
+
+            for uploaded_file in uploaded_files:
+
+                file_bytes = uploaded_file.read()
+                extension = uploaded_file.name.split(".")[-1].lower()
+
+                try:
+
+                    if extension == "pdf":
+                        text = extract_pdf(file_bytes)
+
+                    elif extension == "txt":
+                        text = extract_text(file_bytes)
+
+                    else:
+                        continue
+
+                    if not text or not text.strip():
+                        st.warning(f"⚠️ {uploaded_file.name} contains no readable text.")
+                        continue
+
+                    # Store filename
+                    uploaded_names.append(uploaded_file.name)
+
+                    # Add separator between files
+                    combined_text += (
+                        f"\n\n==============================\n"
+                        f"FILE: {uploaded_file.name}\n"
+                        f"==============================\n\n"
+                    )
+
+                    combined_text += text
+
+                except Exception:
+                    st.warning(f"❌ Failed to read {uploaded_file.name}")
+       
+            index_document(combined_text)
+            # Warming The ChromaDB Client
+            retrieve_context("testing ...",top_k=1)
+            
+
+        if combined_text.strip():
+            st.session_state["pdf_notes"] = combined_text
+            st.session_state["pdf_names"] = uploaded_names
+        else:
             st.session_state.pop("pdf_notes", None)
+            st.session_state.pop("pdf_names", None)
 
+elif uploaded_files :
+    st.error("❌ You can upload a maximum of 5 files.")
+
+# Success Message
 if "pdf_notes" in st.session_state:
-    st.success(f"{st.session_state["pdf_name"]}  has been  Uploaded")
 
-st.markdown("<br><br>", unsafe_allow_html=True)
+    st.success("✅ Files uploaded successfully!")
+
+    for name in st.session_state["pdf_names"]:
+        st.write(f"📄 {name}")
+
 
 # Buttons
-
+st.markdown("<br>",unsafe_allow_html=True)
 col1,col2,col3,col4 = st.columns(4)
 
 with col1:

@@ -1,4 +1,4 @@
-def questionnaire_prompt(topic: str,text: str,option: str,difficulty: str,num_questions: int)->str:
+def questionnaire_prompt(topic: str, text: str, option: str, difficulty: str, num_questions: int) -> str:
     return f"""
         You are an expert academic Question Generator.
 
@@ -17,6 +17,7 @@ def questionnaire_prompt(topic: str,text: str,option: str,difficulty: str,num_qu
         - Return Markdown only.
         - If the topic is empty, generate questions from the whole document.
         - Avoid asking questions from the Preface, Contents or Index.
+        -EACH QUESTION'S ANSWER HAS TO BE IN NEW LINE
 
         ========================
         USER REQUEST
@@ -48,16 +49,16 @@ def questionnaire_prompt(topic: str,text: str,option: str,difficulty: str,num_qu
         - Do NOT reveal the answers.
         - At the end, generate an Answer Key section.
 
-        Example:
+        Example Format:
+        CRITICAL FORMATTING RULE:
+        - DO NOT use tables, vertical pipes (|), or table dividers (---).
+        - ALWAYS format options using standard Markdown bullet lists EXACTLY like this:
 
-        1. What is a tuple?
-
-        | A | B |
-        |---|---|
-        | Mutable | Immutable |
-        | C | D |
-        |---|---|
-        | Dictionary | Set |
+        1. [Question text here]?
+        - **A)** Option A text
+        - **B)** Option B text
+        - **C)** Option C text
+        - **D)** Option D text
 
         --------------------------------------
 
@@ -65,14 +66,14 @@ def questionnaire_prompt(topic: str,text: str,option: str,difficulty: str,num_qu
 
         Generate exactly {num_questions} descriptive questions.
 
-        Questions should include a mix of:
+        Questions should include a mix appropriate to the document context, such as:
         - Short Answer
         - Long Answer
-        - Explain
-        - Compare
-        - Define
-        - List
-        - Application-based questions
+        - Explain / Elaborate
+        - Compare & Contrast
+        - Define / Describe
+        - List / Categorize
+        - Application / Context-based questions
 
         At the end generate an Answer Key with concise model answers.
 
@@ -80,65 +81,67 @@ def questionnaire_prompt(topic: str,text: str,option: str,difficulty: str,num_qu
 
         If Question Type is "Mixed":
 
-        Determine the subject automatically.
+        Determine the subject domain automatically from the uploaded document and adapt question distribution accordingly:
 
-        Programming Subjects:
+        For Technical / Computer Science Documents:
         - 30% MCQs
-        - 30% Coding Problems
-        - 20% Debugging Questions
-        - 20% Output Prediction
+        - 30% Coding / Practical Problems
+        - 20% Debugging / Error Identification
+        - 20% Output / Execution Prediction
+
+        For Mathematics / Quantitative Documents:
+        - MCQs
+        - Numerical Problems
+        - Proofs / Derivations
+
+        For Science / Engineering Documents:
+        - MCQs
+        - Analytical / Numerical Problems
+        - Conceptual Theory
+
+        For Humanities / Social Science / General Theory Documents:
+        - MCQs
+        - Short Answer
+        - Essay / Analytical Questions
+        - Case Study / Source Analysis
 
         For every MCQ inside Mixed Questions, use EXACTLY the same formatting rules as the MCQ section.
 
         Each MCQ must be formatted as:
+        CRITICAL FORMATTING RULE:
+        - DO NOT use tables, vertical pipes (|), or table dividers (---).
+        - ALWAYS format options using standard Markdown bullet lists EXACTLY like this:
 
-        1. Question
-
-        | A | B |
-        |---|---|
-        | Option A | Option B |
-        | Option C | Option D |
+        1. [Question text here]?
+        - **A)** Option A text
+        - **B)** Option B text
+        - **C)** Option C text
+        - **D)** Option D text
 
         Leave one blank line before and after each table.
 
         Do not write Markdown tables on a single line.
 
-        Mathematics:
-        - MCQs
-        - Numerical Problems
-        - Proofs
-        - Derivations
-
-        Science:
-        - MCQs
-        - Numerical Problems
-        - Theory
-
-        Theory Subjects:
-        - MCQs
-        - Short Answer
-        - Long Answer
-        - Case Study
-
-        At the end provide an Answer Key.
+        At the end provide an Answer Key .
 
         ========================
         DIFFICULTY
         ========================
 
         Easy:
-        - Direct questions
-        - Basic concepts
+        - Direct factual questions
+        - Basic concepts and definitions
 
         Medium:
         - Conceptual understanding
-        - Moderate application
+        - Moderate application or synthesis
 
         Hard:
-        - Analytical
-        - Multi-concept
+        - Analytical / Evaluative
+        - Multi-concept integration
         - Exam level
-        - Give Harder Options (Mcq's)
+        - Give harder/plausible distractor options (for MCQs)
+
         ========================
         DOCUMENT
         ========================
@@ -146,8 +149,8 @@ def questionnaire_prompt(topic: str,text: str,option: str,difficulty: str,num_qu
         {text}
         """
 
-def cheatsheet_prompt(text:str)->str:
-    return  f"""
+def cheatsheet_prompt(text: str) -> str:
+    return f"""
         You are an expert professor, senior technical writer, curriculum designer, and exam setter.
 
         Your ONLY objective is to create the highest-quality exam cheat sheet possible from the uploaded document.
@@ -184,7 +187,7 @@ def cheatsheet_prompt(text:str)->str:
 
         12. Remove unnecessary explanations.
 
-        13. Preserve all technically important information.
+        13. Preserve all technically or conceptually important information.
 
         14. Optimize entirely for exam revision.
 
@@ -197,9 +200,7 @@ def cheatsheet_prompt(text:str)->str:
 
         Write everything in clean Markdown.
 
-        Use
-
-        # ## ### headings
+        Use # ## ### headings.
 
         Use Markdown tables whenever comparisons exist.
 
@@ -207,16 +208,7 @@ def cheatsheet_prompt(text:str)->str:
 
         Bold important terms.
 
-        Use inline code formatting for
-
-        - keywords
-        - commands
-        - operators
-        - syntax
-        - function names
-        - methods
-        - class names
-        - filenames
+        Use inline code formatting ONLY when applicable to the document domain (e.g., code keywords, mathematical variables, commands, syntax, formal terms, or key formulas).
 
         Never write long paragraphs.
 
@@ -230,7 +222,7 @@ def cheatsheet_prompt(text:str)->str:
 
         # Title
 
-        Generate a concise title.
+        Generate a concise title based on the document topic.
 
         ---
 
@@ -244,56 +236,35 @@ def cheatsheet_prompt(text:str)->str:
 
         ---
 
-        # 2. Important Definitions
+        # 2. Important Definitions / Terminology
 
         Create a table.
 
-        | Term | Definition |
+        | Term / Concept | Definition / Significance |
 
         Definitions should be concise.
 
         ---
 
-        # 3. Syntax, Commands, Operators & Formulas
+        # 3. Key Rules, Formulas, Syntax & Frameworks [Only if present in document]
 
-        Extract every important
+        Extract domain-relevant structures directly present in the document (e.g., mathematical formulas, code syntax, legal rules, scientific laws, or logical frameworks).
 
-        - syntax pattern
-        - programming construct
-        - formula
-        - operator
-        - command
-        - function signature
+        Table Format (if applicable):
 
-        Use
+        | Rule / Formula / Syntax | Context / Purpose | Notes |
 
-        | Syntax | Purpose | Notes |
-
-        Examples include
-
-        - language syntax
-        - CLI commands
-        - mathematical formulas
-        - APIs
-        - programming keywords
-
-        Omit if not applicable.
+        Omit this section entirely if not applicable to the document.
 
         ---
 
-        # 4. Built-in Functions / APIs / Commands
+        # 4. Specialized Elements / Tools / APIs [Only if present in document]
 
-        If the document contains functions,
-        methods,
-        commands,
-        libraries,
-        or APIs,
+        If the document contains domain-specific tools, functions, methods, commands, dates, historical events, or specific elements, create a dedicated table.
 
-        create a dedicated table.
+        | Element / Tool / Event | Function / Significance | Key Context |
 
-        Example
-
-        | Function | Purpose | Example |
+        Omit if not applicable.
 
         ---
 
@@ -309,41 +280,20 @@ def cheatsheet_prompt(text:str)->str:
 
         # 6. Comparisons
 
-        Whenever two or more things are compared,
+        Whenever two or more things are compared, convert them into Markdown tables.
 
-        convert them into Markdown tables.
-
-        Examples
-
-        Data structures
-
-        Algorithms
-
-        Functions
-
-        Classes
-
-        Keywords
-
-        Operators
-
-        Libraries
-
-        Protocols
-
-        Features
-
-        Advantages
-
-        Disadvantages
-
-        Anything comparable.
+        Examples (adapt based on document domain):
+        - Concepts / Theories
+        - Categories / Classes
+        - Methods / Approaches
+        - Features / Elements
+        - Advantages / Disadvantages
 
         ---
 
-        # 7. Workflows / Algorithms / Processes
+        # 7. Workflows / Processes / Chronologies [Only if present in document]
 
-        Convert every process into numbered steps.
+        Convert every sequence, process, algorithm, derivation, or historical timeline into numbered steps.
 
         Never use paragraphs.
 
@@ -351,51 +301,29 @@ def cheatsheet_prompt(text:str)->str:
 
         ---
 
-        # 8. Common Mistakes / Frequently Confused Concepts
+        # 8. Common Mistakes / Misconceptions / Frequently Confused Concepts
 
-        Extract mistakes students are likely to make.
+        Extract common errors, pitfalls, or easily confused ideas discussed in or implied by the document.
 
         Create comparison tables whenever possible.
 
-        Examples
-
-        - `==` vs `is`
-        - `append()` vs `extend()`
-        - Stack vs Queue
-
-        Only include concepts present in the document.
+        Only include concepts explicitly supported by the document.
 
         ---
 
-        # 9. Important Examples
+        # 9. Key Examples & Case Studies [Only if present in document]
 
-        Extract only the BEST examples.
+        Extract only the BEST illustrative examples, code snippets, mathematical proofs, or case studies from the document.
 
-        Shorten them.
+        Shorten them. Keep only essential components.
 
-        Remove unnecessary code.
-
-        Keep only the essential lines.
-
-        Always use Markdown code blocks when showing code.
+        Use code blocks only when presenting actual programming code or complex structured notation.
 
         ---
 
         # 10. Quick Reference Tables
 
-        Create additional high-density reference tables whenever useful.
-
-        Examples
-
-        - Built-in functions
-        - String methods
-        - List methods
-        - Dictionary methods
-        - Operators
-        - File modes
-        - HTTP status codes
-        - SQL commands
-        - Linux commands
+        Create additional high-density reference tables relevant to the subject matter of the document.
 
         Only include information found in the document.
 
@@ -407,44 +335,31 @@ def cheatsheet_prompt(text:str)->str:
 
         Create an extremely dense revision sheet.
 
-        Rules
-
+        Rules:
         - Maximum information density
         - One bullet per concept
         - No explanations
         - No full paragraphs
-        - Include syntax whenever useful
-        - Include operators
-        - Include commands
-        - Include formulas
-        - Include function names
-        - Include keywords
+        - Include domain-specific key elements (formulas, syntax, dates, key terms) where appropriate
         - Include tricky facts
 
-        If the document is large,
-        produce enough bullets to cover every major topic.
+        If the document is large, produce enough bullets to cover every major topic.
 
         ---
 
         # 12. Last-Minute Revision
 
-        Generate 30–100 ultra-short memory triggers.
+        Generate 30–100 ultra-short memory triggers adapted to the subject matter.
 
-        Each bullet
+        Each bullet:
+        - Under 10 words whenever possible
+        - One fact only
+        - Bold important words
 
-        - under 10 words whenever possible
-        - one fact only
-        - bold important words
-
-        Example
-
-        • **Stack** → LIFO
-
-        • **Queue** → FIFO
-
-        • **finally** → Always executes
-
-        • **dict.get()** → Safe lookup
+        Examples (format style only, adapt content to document):
+        • **Term/Concept** → Key defining detail
+        • **Cause** → Primary Effect
+        • **Condition** → Direct outcome
 
         ====================================================================
         QUALITY CHECK (MANDATORY)
@@ -453,29 +368,14 @@ def cheatsheet_prompt(text:str)->str:
         Before returning the answer, silently verify:
 
         ✓ The ENTIRE document has been covered.
-
-        ✓ Every major chapter appears.
-
+        ✓ Every major chapter/section appears.
         ✓ No important topic has been skipped.
-
         ✓ No hallucinated information exists.
-
         ✓ Similar information has been merged.
-
         ✓ Tables were used whenever appropriate.
-
-        ✓ Code examples are minimal.
-
-        ✓ Syntax uses inline code formatting.
-
-        ✓ Methods use inline code formatting.
-
-        ✓ Operators use inline code formatting.
-
-        ✓ Commands use inline code formatting.
-
+        ✓ Code blocks/Formulas are used ONLY if relevant to the document type.
+        ✓ Formatting matches the domain context appropriately.
         ✓ Information density is maximized.
-
         ✓ Output is optimized for exam revision.
 
         If any check fails, improve the cheat sheet before returning it.
@@ -486,16 +386,16 @@ def cheatsheet_prompt(text:str)->str:
 
         {text}
         """
- 
-def explain_prompt(prompt:str,text:str)->str:
-    return  f"""
+
+def explain_prompt(prompt: str, text: str) -> str:
+    return f"""
         You are an expert teacher, educator, and academic explainer.
 
         Your primary goal is to help the student deeply understand the topic instead of only summarizing it.
 
         You have two sources of information:
 
-        1. The uploaded PDF.
+        1. The uploaded document.
         2. Your own verified academic knowledge.
 
         Rules:
@@ -503,24 +403,24 @@ def explain_prompt(prompt:str,text:str)->str:
         - Always answer truthfully.
         - Never invent facts.
         - Never make up information that is uncertain.
-        - If something is not mentioned in the PDF but is required to explain the topic correctly,
+        - If something is not mentioned in the document but is required to explain the topic correctly,
         use your verified knowledge.
-        - Never contradict established scientific, mathematical, historical, or technical facts.
-        - If the PDF contains outdated or incorrect information, politely point it out and provide
+        - Never contradict established facts in the relevant academic field.
+        - If the document contains outdated or incorrect information, politely point it out and provide
         the correct explanation.
         - If you are unsure about something, explicitly say so instead of guessing.
 
         Teaching Style:
 
-        - Teach like an excellent professor.
+        - Teach like an excellent professor in the relevant subject area.
         - Assume the reader is learning for the first time.
         - Start from basic concepts before moving to advanced ideas.
-        - Explain *why* things happen, not just *what* happens.
+        - Explain *why* things happen or work, not just *what* happens.
         - Give intuition whenever possible.
-        - Use simple language.
-        - Include examples.
+        - Use simple, clear language.
+        - Include relevant examples (use code snippets or formulas ONLY if the subject requires them).
         - Use analogies when they improve understanding.
-        - Explain technical terms before using them.
+        - Explain technical or domain-specific terms before using them.
         - Break difficult ideas into small steps.
 
         Formatting Rules:
@@ -528,7 +428,7 @@ def explain_prompt(prompt:str,text:str)->str:
         - Write in clean Markdown.
         - Use headings.
         - Use bullet points.
-        - Use numbered lists for processes.
+        - Use numbered lists for processes, steps, or chronologies.
         - Use tables for comparisons.
         - Bold important concepts.
         - Use blockquotes for important notes.
@@ -545,17 +445,17 @@ def explain_prompt(prompt:str,text:str)->str:
         ## Concept Explanation
         Teach the concept from the basics.
 
-        ## How It Works
-        Explain the mechanism step by step.
+        ## How It Works / Core Mechanism
+        Explain the underlying mechanism, structure, logic, or process step by step.
 
         ## Examples
-        Give 2–5 examples.
+        Give 2–5 domain-appropriate examples.
 
         ## Analogy
         Provide an easy-to-understand real-world analogy if appropriate.
 
-        ## Common Mistakes
-        Mention common misconceptions students have.
+        ## Common Mistakes / Misconceptions
+        Mention common misconceptions or errors students make on this topic.
 
         ## Key Points
         Summarize the most important facts.
@@ -574,24 +474,24 @@ def explain_prompt(prompt:str,text:str)->str:
         {text}
         """
 
-def summarize_prompt(prompt:str,text:str)->str:
+def summarize_prompt(prompt: str, text: str) -> str:
     return f"""
         You are an expert academic Summarizing assistant.
 
-        Your job is to answer ONLY using the information contained in the uploaded PDF.
+        Your job is to answer ONLY using the information contained in the uploaded document.
 
         Rules:
-        -Do Not Put Any Filler
+        - Do Not Put Any Filler.
         - Never use outside knowledge.
         - Never invent or assume information.
         - If the requested information is not found in the document, reply exactly:
-        "This information is not available in the uploaded PDF."
+        "This information is not available in the uploaded document."
 
         Formatting Rules:
         - Write everything in clean Markdown.
         - Use proper headings (#, ##, ###).
         - Use bullet points instead of long paragraphs whenever possible.
-        - Use numbered lists when explaining steps or processes.
+        - Use numbered lists when explaining steps, processes, or chronologies.
         - Use tables whenever comparisons improve readability.
         - Bold important keywords and concepts.
         - Use blockquotes (>) for important notes or warnings.
@@ -600,6 +500,7 @@ def summarize_prompt(prompt:str,text:str)->str:
         - Remove unnecessary introductions and filler sentences.
         - Do not repeat information.
         - Make the output easy to revise for exams.
+        - Include domain-specific constructs (e.g., formulas, code, dates) ONLY if they exist in the text.
 
         When applicable, always include these sections in this order:
 
@@ -614,8 +515,8 @@ def summarize_prompt(prompt:str,text:str)->str:
         ## Key Points
         List the most important facts.
 
-        ## Important Definitions
-        Include only if definitions exist in the document.
+        ## Important Definitions / Key Terms
+        Include only if definitions or specialized terms exist in the document.
 
         ## Tables
         Convert comparisons into Markdown tables whenever possible.
@@ -626,7 +527,6 @@ def summarize_prompt(prompt:str,text:str)->str:
         ## Quick Revision Sheet
         Summarize the entire topic into high-density exam notes.
 
-        
         =========================
         USER QUESTION
         =========================
