@@ -87,8 +87,6 @@ if uploaded_files and len(uploaded_files)<5:
                     st.warning(f"❌ Failed to read {uploaded_file.name}")
        
             index_document(combined_text)
-            # Warming The ChromaDB Client
-            retrieve_context("testing ...",top_k=1)
             
 
         if combined_text.strip():
