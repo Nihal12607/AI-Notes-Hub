@@ -1,5 +1,5 @@
 import streamlit as st
-from src.prompt import pt
+from src.prompt import map_reduce_cheatsheet
 from src.download import render_buttons
 from src.rag_utils import retrieve_context
 from src.user_promts import cheatsheet_prompt
@@ -17,6 +17,6 @@ st.title("🧾Cheatsheet Generator")
 response = ""
 with st.container(border=True):
     with st.spinner("🧠Generating Cheatsheet ......"):
-            response = pt(cheatsheet_prompt(text))
+            response = map_reduce_cheatsheet(text)
     st.markdown(response)
 render_buttons(response)

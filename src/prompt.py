@@ -2,6 +2,7 @@ from google import genai
 from google.genai import types
 import os
 import streamlit as st
+import time
 
 @st.cache_resource(show_spinner=False)
 def get_gemini_client() -> genai.Client | None:
@@ -27,3 +28,25 @@ def pt(f_prompt:str) -> str:
     )
 
     return response.text
+
+def map_reduce_cheatsheet(text: str, chunk_size: int = 100_000) -> str:
+    # 1. Split text into manageable chunks
+    chunks = [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
+    
+    sub_summaries = []
+    
+    # 2. MAP: Generate mini cheatsheets for each chunk
+    for idx, chunk in enumerate(chunks):
+        prompt = f"Create a concise technical cheatsheet summary for this section of notes:\n\n{chunk}"
+        
+        # Small sleep to stay safe under per-minute rate limits
+        time.sleep(2) 
+        
+        sub_summary = pt(prompt)
+        sub_summaries.append(sub_summary)
+    
+    # 3. REDUCE: Combine all mini cheatsheets into one master cheatsheet
+    combined_notes = "\n\n--- SECTION BREAK ---\n\n".join(sub_summaries)
+    final_prompt = f"Combine the following section summaries into one cohesive, beautifully organized master cheatsheet:\n\n{combined_notes}"
+    
+    return pt(final_prompt)
