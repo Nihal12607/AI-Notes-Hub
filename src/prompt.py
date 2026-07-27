@@ -1,5 +1,6 @@
 from google import genai
 from google.genai import types
+from google.genai.errors import ServerError, APIError
 import os
 import streamlit as st
 import time
