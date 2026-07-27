@@ -1,20 +1,18 @@
 import os
+import gc
 import streamlit as st
 
 # 1. DISABLE CHROMADB TELEMETRY NETWORK CALLS IMMEDIATELY
 os.environ["ANONYMOUS_TELEMETRY"] = "False"
 
 
-# 2. Native zero-dependency text splitter (Replaces heavy langchain import)
+# 2. Native zero-dependency text splitter
 def recursive_split_text(text: str,chunk_size: int = 1000,chunk_overlap: int = 150):
     chunks = []
-
     step = chunk_size - chunk_overlap
 
     for start in range(0, len(text), step):
-
         end = start + chunk_size
-
         chunks.append(text[start:end].strip())
 
     return [c for c in chunks if len(c)>200]
@@ -24,7 +22,6 @@ def recursive_split_text(text: str,chunk_size: int = 1000,chunk_overlap: int = 1
 def get_chroma_client():
     import chromadb
     from chromadb.config import Settings
-
     return chromadb.Client(Settings(anonymized_telemetry=False))
 
 
@@ -32,7 +29,6 @@ def get_chroma_client():
 @st.cache_resource(show_spinner=False)
 def load_embedder():
     from fastembed import TextEmbedding
-
     return TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
 
 
@@ -43,7 +39,7 @@ def get_embeddings(texts: list[str]) -> list[list[float]]:
 
 
 def index_document(doc_text: str, collection_name: str = "user_pdf"):
-    """Splits raw text into chunks, embeds them, and saves to ChromaDB."""
+    """Splits raw text into chunks, embeds them, and saves to ChromaDB in batches."""
 
     chunks = recursive_split_text(doc_text, chunk_size=6000, chunk_overlap=350)
 
@@ -58,10 +54,20 @@ def index_document(doc_text: str, collection_name: str = "user_pdf"):
         pass
 
     collection = chroma_client.create_collection(name=collection_name)
-    embeddings = get_embeddings(chunks)
-    ids = [f"chunk_{i}" for i in range(len(chunks))]
+    
+    # Process chunks in batches of 50 to avoid OOM crashes on Streamlit Free Tier
+    batch_size = 50
+    for i in range(0, len(chunks), batch_size):
+        batch_chunks = chunks[i : i + batch_size]
+        batch_embeddings = get_embeddings(batch_chunks)
+        batch_ids = [f"chunk_{j}" for j in range(i, i + len(batch_chunks))]
 
-    collection.add(ids=ids, embeddings=embeddings, documents=chunks)
+        collection.add(ids=batch_ids, embeddings=batch_embeddings, documents=batch_chunks)
+        
+        # Explicitly free up memory after every batch
+        del batch_chunks, batch_embeddings, batch_ids
+        gc.collect()
+
     return collection
 
 

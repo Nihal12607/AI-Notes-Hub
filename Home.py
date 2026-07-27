@@ -57,7 +57,6 @@ if uploaded_files and len(uploaded_files)<5:
                 extension = uploaded_file.name.split(".")[-1].lower()
 
                 try:
-
                     if extension == "pdf":
                         text = extract_pdf(file_bytes)
 
@@ -82,6 +81,11 @@ if uploaded_files and len(uploaded_files)<5:
                     )
 
                     combined_text += text
+                    
+                    # Aggressive cleanup of local variable
+                    del text
+                    import gc
+                    gc.collect()
 
                 except Exception:
                     st.warning(f"❌ Failed to read {uploaded_file.name}")
