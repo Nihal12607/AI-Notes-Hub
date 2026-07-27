@@ -31,7 +31,7 @@ uploaded_files = st.file_uploader(label="Select file",
 st.markdown("<br>", unsafe_allow_html=True)
 
 # Text Extraction
-if uploaded_files and len(uploaded_files)<5:
+if uploaded_files and len(uploaded_files)<=5:
 
     # Create a hash for the entire upload
     hash_object = hashlib.sha256()
